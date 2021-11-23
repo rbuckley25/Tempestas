@@ -5,4 +5,4 @@ Exploration of the use of Reinforcement Learning in Autonomous vehicles with an 
 
 Using [CARLA](https://carla.org/) and [gym-carla](https://github.com/cjy1992/gym-carla) (with some alterations) for the env.
 
-Using [This Paper](https://arxiv.org/abs/1902.03765) as a basis, along with [this paper](https://arxiv.org/abs/1807.01001).
+Using [This Paper](https://arxiv.org/abs/1902.03765) along with [this paper](https://arxiv.org/abs/1807.01001) as a basis, with an eye towards further comparing the base model with more advanced models.
