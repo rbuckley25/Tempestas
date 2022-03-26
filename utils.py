@@ -51,11 +51,10 @@ def replace(a):
         pic[x,y,2] = RGB_values[2]
     return pic
 
-def generate_semantic_im(RGB_image):
+def generate_semantic_im(RGB_image,model):
     new_obs = RGB_image.reshape(1,3,128,128)
     out,_ = model(new_obs)
     sample = out.cpu().argmax(dim=1)
-    print(sample.shape)
     pic = replace(sample.numpy())
     return Image.fromarray(pic,'RGB')
 

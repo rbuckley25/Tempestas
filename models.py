@@ -1,3 +1,4 @@
+from os import device_encoding
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -7,7 +8,7 @@ import torchvision.transforms as T
 
 class shallowDQN(nn.Module):
     def __inti__(self, outputs):
-        super(ShallowDQN,self).__init__()
+        super(shallowDQN,self).__init__()
 
         self.lin1 = nn.Linear(9,15)
         self.lin2 = nn.Linear(15,9)
@@ -24,9 +25,11 @@ class shallowDQN(nn.Module):
 
 class DeepDQN(nn.Module):
 
-    def __init__(self, outputs):
-        super(DQN, self).__init__()
+    def __init__(self, outputs,device):
+        super(DeepDQN, self).__init__()
         
+        self.device = device
+
         self.lin1 = nn.Linear(9,80)
         self.lin2 = nn.Linear(80,50)
         self.lin3 = nn.Linear(50,25)
@@ -35,7 +38,7 @@ class DeepDQN(nn.Module):
         self.lin6 = nn.Linear(8,3)
 
     def forward(self, x):
-        x = x.to(device)
+        x = x.to(self.device)
         x = F.relu(self.lin1(x))
         x = F.relu(self.lin2(x))
         x = F.relu(self.lin3(x))
@@ -47,8 +50,10 @@ class DeepDQN(nn.Module):
 
 class Full_DQN(nn.Module):
 
-    def __init__(self, outputs,input_size):
+    def __init__(self, outputs,input_size,device):
         super(Full_DQN, self).__init__()
+
+        self.device = device
 
         self.lin0 = nn.Linear(input_size+9,150)
         self.lin1 = nn.Linear(150,100)
@@ -59,7 +64,7 @@ class Full_DQN(nn.Module):
         self.lin6 = nn.Linear(8,3)
 
     def forward(self, x):
-        x = x.to(device)
+        x = x.to(self.device)
         x = F.relu(self.lin0(x))
         x = F.relu(self.lin1(x))
         x = F.relu(self.lin2(x))
@@ -73,8 +78,10 @@ class Full_DQN(nn.Module):
 
 class PerceptionNet(nn.Module):
 
-    def __init__(self):
+    def __init__(self,device):
         super(PerceptionNet,self).__init__()
+        self.device = device
+
         self.conv1 = nn.Conv2d(3, 32, kernel_size=4, stride=2, padding=1)
         
         self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1)
@@ -127,14 +134,8 @@ class PerceptionNet(nn.Module):
         x = F.leaky_relu(self.bn10(self.conv11(x)),negative_slope=0.02)
         return torch.sigmoid(self.conv12(x))
 
-    def reparameterize(self,mu,logvar):
-        std = torch.exp(0.5*logvar)
-        eps = torch.randn_like(std)
-        latent_sample = mu + eps*std
-        return latent_sample
-    
     def forward(self, x):
-        x = x.to(device, dtype=torch.float32)
+        x = x.to(self.device, dtype=torch.float32)
         latent = self.encode(x)
         #latent = self.reparameterize(mu,logvar)
         out = self.decode(latent)
