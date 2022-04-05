@@ -61,13 +61,13 @@ st.subheader('CycleGAN after 30 rounds of Training')
 l1,l2,l3,l4 = st.columns(4)
 
 with l1:
-    st.image(ims_l[3])
+    st.image(ims_l[2])
 with l2:
     st.image(ims_l[0])
 with l3:
     st.image(ims_l[1])
 with l4:
-    st.image(ims_l[2])
+    st.image(ims_l[3])
 
 
 
