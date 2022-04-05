@@ -1,12 +1,20 @@
 import numpy as np
+from itertools import count
 from PIL import Image
 import torch
 import torch.nn as nn
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 from torch.utils.data import Dataset
+from torchvision.io import read_image
 
-#recode image tags from 22 to 13
+import glob
+import carla
+import gym_carla
+
+#########
+# Pixel Recode and Image Generation Function
+#########
 def recode_tags(sem_image):
     recode_dict = {0:0,1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,
                     10:10,11:11,12:12,13:0,14:3,15:1,16:3,17:2,18:5,19:3,20:4,21:3,22:9
@@ -58,7 +66,11 @@ def generate_semantic_im(RGB_image,model):
     pic = replace(sample.numpy())
     return Image.fromarray(pic,'RGB')
 
-#Dataset classes for loading images
+
+
+#########
+# Auto Encoder Dataset Loader
+#########
 class CustomImageDataset(Dataset):
     def __init__(self, weather, town, test=False , transform=None, target_transform=None):
         dirt = './Datasets/'+weather+'/'+town
@@ -87,7 +99,33 @@ class CustomImageDataset(Dataset):
         return image, label
 
 
-#Image Transformers
+class GANImageDataset(Dataset):
+    def __init__(self, weather, town, model, transform=None, target_transform=None):
+        self.dir = './Datasets/'+weather+'/'+town+'/'+model+'/test_latest/images'
+        self.transform = transform
+        self.target_transform = target_transform
+        self.real = glob.glob(self.dir+'/*real.png')
+
+
+    def __len__(self):
+        return len(list(self.real))
+
+    def __getitem__(self, idx): 
+        img_path = self.real[idx]
+        image = read_image(img_path)
+        label_name_split = self.real[idx].split('_')
+        label_name = label_name_split[0]+'_'+label_name_split[1]+'_fake.png'
+        label = read_image( label_name)
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            label = self.target_transform(label)
+        return image, label
+
+
+#########
+# Image Transformations
+#########
 class CropResizeTransform:
     def __init__(self, top, left, width, height, size):
         self.top = top
@@ -107,6 +145,81 @@ class Hflip:
         return TF.hflip(x)
 
 
+
+
+#########
+# Model Weight Initalization
+#########
+
 def AE_initalize_weights(layer):
     if isinstance(layer, torch.nn.Linear) or isinstance(layer,torch.nn.Linear):
         nn.init.kaiming_uniform_(layer.weight.data,nonlinearity='relu')
+
+
+#########
+# Training Function
+#########
+
+def run_AE_demo(num_episodes, DQN, AE, Base, env, device):
+    env.use_fixed = 'H'
+    env.route_idx = 1
+    input_size = 73
+    results = np.zeros((num_episodes,3))
+    for i_episode in range(num_episodes):
+        rewards = 0
+        # Initialize the environment and state
+        obs = env.reset()
+        ego_location = env.ego.get_location()
+        ego_dir = gym_carla.envs.misc.get_lane_dis(env.waypoints,ego_location.x,ego_location.y)
+        #pos gets a distanc d and array w which has to be seperated out in below line
+        ego_pos = np.asarray((ego_dir[0],ego_dir[1][0],ego_dir[1][1]),dtype=np.float32)
+        state = np.concatenate((ego_pos,np.zeros(6)))
+        state = torch.tensor(state).reshape(1,9,1,1)
+
+        new_obs = torch.tensor(obs['camera'])
+        new_obs = new_obs.permute(2,0,1).reshape(1,3,128,128)
+        
+        _,latent_space = AE(new_obs)
+        state = torch.cat((state,latent_space.cpu()),1).reshape(1,input_size)
+        # Resize, and add a batch dimension (BCHW)
+        for t in count():
+            # Select and perform an action
+            
+            with torch.no_grad():
+                action = DQN(state.float()).argmax().view(1,1)
+                obs, reward, done, info  = env.step(action.item())
+
+                new_obs = torch.tensor(obs['camera'])
+                new_obs = new_obs.permute(2,0,1).reshape(1,3,128,128)
+                _,latent_space = AE(new_obs)
+
+                sem = Base.decode(latent_space).detach().cpu().argmax(dim=1)
+                sem = replace(sem.numpy().reshape(1,128,128).transpose(1,2,0))
+                env.show_images(sem)
+
+                rewards += reward
+                reward = torch.tensor([reward], device=device)
+
+                #pos gets a distanc d and array w which has to be seperated out in below line
+                pos = np.asarray((info['position'][0],info['position'][1][0],info['position'][1][1]))
+                ang = np.asarray(info['angular_vel'])
+                acc = np.asarray(info['acceleration'])
+                steer = np.asarray(info['steer'])
+                next_state = np.concatenate((pos, ang, acc, steer), axis=None)
+                
+                
+                info_state = torch.tensor(next_state).reshape(1,9,1,1)
+                next_state = torch.cat((info_state,latent_space.cpu()),1).reshape(1,input_size)
+
+            state = next_state
+
+            if done:
+                results[i_episode,0] = rewards
+                results[i_episode,1] = t
+                if t  == env.max_time_episode:
+                    results[i_episode,2] = 1
+                else:
+                    results[i_episode,2] = 0
+                print(results)
+                print('########')
+                break
