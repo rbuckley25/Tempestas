@@ -7,15 +7,17 @@ import torchvision.transforms as T
 
 
 class shallowDQN(nn.Module):
-    def __inti__(self, outputs):
+    def __inti__(self, outputs, device):
         super(shallowDQN,self).__init__()
+
+        self.device = device
 
         self.lin1 = nn.Linear(9,15)
         self.lin2 = nn.Linear(15,9)
         self.lin3 = nn.Linear(9,3)
 
     def forward(self,x):
-        x = x.to(device)
+        x = x.to(self.device)
         x = F.relu(self.lin1(x))
         x = F.relu(self.lin2(x))
         x = self.lin3(x)
