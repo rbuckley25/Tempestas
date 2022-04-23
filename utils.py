@@ -163,6 +163,10 @@ def AE_initalize_weights(layer):
 def run_AE_demo(num_episodes, DQN, AE, Base, env, device):
     env.use_fixed = 'H'
     env.route_idx = 1
+    route = {'Town04':{'H':[193]}} 
+    env.routes = route
+    env.routes_dict = route
+    env.desired_speed = 5
     input_size = 73
     results = np.zeros((num_episodes,3))
     for i_episode in range(num_episodes):

@@ -92,7 +92,6 @@ st.text('Each Perception Module has been trained using Transfer Learning based o
 
 weather1, weather2 = st.columns(2)
 
-
 with weather1:
     option1 = st.selectbox('Agent 1 Weather Type',('Sunny','Hard Rain','Wet Sunset'),key=1)
     option2 = st.selectbox('Agent 1 AutoEncoder Type',('Sunny','Hard Rain','Wet Sunset'),key=2)
@@ -101,7 +100,8 @@ with weather1:
     st.video(read_video('./video/'+w_type[option1]+'_'+w_type[option2]+'.mp4'))
     df1 = pd.read_csv('./model_results/FullModel/'+w_type[option1]+'_'+w_type[option2]+'_right_turn.csv').drop(['Unnamed: 0'],axis=1).agg({'Reward':mean, 'Length':mean, 'Completed':sum}).round(2)
 
-base = df1 = pd.read_csv('./model_results/FullModel/Clear_Clear_right_turn.csv').drop(['Unnamed: 0'],axis=1).agg({'Reward':mean, 'Length':mean, 'Completed':sum}).round(2)
+
+base = pd.read_csv('./model_results/FullModel/Clear_Clear_right_turn.csv').drop(['Unnamed: 0'],axis=1).agg({'Reward':mean, 'Length':mean, 'Completed':sum}).round(2)
 
 with weather2:
     option3 = st.selectbox('Agent 2 Weather Type',('Sunny','Hard Rain','Wet Sunset'),key=3)
