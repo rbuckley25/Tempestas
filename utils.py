@@ -73,7 +73,7 @@ def generate_semantic_im(RGB_image,model):
 #########
 class RGBImageDataset(Dataset):
     def __init__(self, weather, town, test=False , transform=None, target_transform=None):
-        dirt = './Datasets/'+weather+'/'+town
+        dirt = './Data/'+weather+'/'+town
         if test:
             dirt = dirt+'/test'
         
@@ -101,7 +101,7 @@ class RGBImageDataset(Dataset):
 
 class GANImageDataset(Dataset):
     def __init__(self, weather, town, model, transform=None, target_transform=None):
-        self.dir = './Datasets/'+weather+'/'+town+'/'+model+'/test_latest/images'
+        self.dir = './Data/'+weather+'/'+town+'/'+model+'/test_latest/images'
         self.transform = transform
         self.target_transform = target_transform
         self.real = glob.glob(self.dir+'/*real.png')
@@ -183,7 +183,7 @@ def run_AE_demo(num_episodes, DQN, AE, Base, env, device):
         ego_location = env.ego.get_location()
         ego_dir = gym_carla.envs.misc.get_lane_dis(env.waypoints,ego_location.x,ego_location.y)
         #pos gets a distanc d and array w which has to be seperated out in below line
-        ego_pos = np.asarray((ego_dir[0],ego_dir[1][0],ego_dir[1][1]),dtype=np.float32)
+        ego_pos = np.asarray((ego_dir[0][0],ego_dir[0][1][0],ego_dir[0][1][1]),dtype=np.float32)
         state = np.concatenate((ego_pos,np.zeros(6)))
         state = torch.tensor(state).reshape(1,9,1,1)
 
