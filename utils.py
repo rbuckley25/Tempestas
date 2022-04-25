@@ -71,7 +71,7 @@ def generate_semantic_im(RGB_image,model):
 #########
 # Auto Encoder Dataset Loader
 #########
-class CustomImageDataset(Dataset):
+class RGBImageDataset(Dataset):
     def __init__(self, weather, town, test=False , transform=None, target_transform=None):
         dirt = './Datasets/'+weather+'/'+town
         if test:
@@ -136,6 +136,13 @@ class CropResizeTransform:
 
     def __call__(self, x):
         return TF.resized_crop(x,self.top,self.left,self.width,self.height,self.size)
+
+class Hflip:
+    def __init__(self):
+        pass
+
+    def __call__(self, x):
+        return TF.hflip(x)
 
 class Hflip:
     def __init__(self):
