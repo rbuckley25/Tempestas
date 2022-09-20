@@ -7,6 +7,7 @@ Using [CARLA](https://carla.org/) and [gym-carla](https://github.com/cjy1992/gym
 
 Using [This Paper](https://arxiv.org/abs/1902.03765) along with [this paper](https://arxiv.org/abs/1807.01001) as a basis, with an eye towards further comparing the base model with more advanced models.
 
+The completed project paper can be accessed [here](https://drive.google.com/file/d/1-cFiLhihXxcjkIE-JIZkvaYyAUQw-OzT/view?usp=sharing)
 
 ## Requirements 
 
